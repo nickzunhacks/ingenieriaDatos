@@ -13,8 +13,9 @@ print(archivo.shape)
 
 # explicacion: se escoge una row cualquiera y se recorre columa por columna
 for columna in archivo.columns:
+    print("columna: ",columna)
     print("valor: ",archivo.iloc[1000][columna])
-    print("tipo: ",type(archivo.iloc[1000][columna]))
+    print("tipo: ",type(archivo.iloc[1000][columna]),"\n")
 
 
 # 5) ver valores null
