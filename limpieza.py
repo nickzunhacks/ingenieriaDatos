@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 #obtiene un dataframe y en la columna precio hace la sumatoria
 #luego obtiene el numero de filas y retorna la sumatoria / numero de filas
@@ -61,6 +63,8 @@ def establecer_mapa_promedios(dataFramesLimpios, productos):
 
     return mapa
 
+#aqui comienza todo
+
 archivo = pd.read_csv('ventas.csv')
 
 """se obtiene un mapa del precio de los productos, haciendolo por medio de la obtencion del promedio 
@@ -87,6 +91,55 @@ print(mapa)
     finalmente cambiamos el tipo de datos de float a int en la columna cantidad
 """
 
-for i, filas in archivo.iterrows():
-    for columna in archivo.columns:
-        if filas[columna]
+archivo_limpio = archivo
+
+# obtiene una serie de booleanos en el que son true si en la fila, precio y cantidad son null
+# esta serie se convierte en una lista de indices donde solo pone los indices donde la serie es true
+# luego el .drop al recibir esta lista de indices, coge el archivo en esta lista de indices y borra 
+archivo_limpio.drop( archivo_limpio[archivo_limpio['precio'].isnull() & archivo_limpio['cantidad'].isnull()].index, inplace=True )
+
+"""
+    primero se obtienen las las filas donde la columna precio es null
+    luego se obtiene toda la columna precio, obteniendo una serie de todos los null en columna precio
+    luego se asigna una serie donde se obtienen todos los null nuevamente de la columna precio y
+    con .map(mapa) logramos que cada producto sea buscado en el mapa y se remplaze por el valor 
+    correspondiente, remplazando el nombre del producto por su valor promedio de precio
+
+"""
+archivo_limpio.loc[archivo_limpio['precio'].isnull(), 'precio'] = archivo[ archivo['precio'].isnull()]['producto'].map(mapa)
+
+# hacemos lo mismo pero con cantidad y solo le asignamos como valor: 1
+archivo_limpio.loc[archivo_limpio['cantidad'].isnull(), 'cantidad'] = 1
+
+# remplazamos los / por - en la columna fecha
+archivo_limpio['fecha'] = archivo_limpio['fecha'].str.replace('/','-')
+
+# remplazamos los nombres y las ciudades que estan en null por un string que diga: "indefinido"
+archivo_limpio.loc[archivo_limpio['cliente'].isnull(), 'cliente'] = "indefinido"
+archivo_limpio.loc[archivo_limpio['ciudad'].isnull(), 'ciudad'] = "indefinido"
+
+# eliminamos duplicados
+archivo_limpio.drop_duplicates(inplace=True)
+
+#creamos columna de precio*cantidad
+archivo_limpio['total de venta'] = archivo_limpio['cantidad']*archivo_limpio['precio']
+
+# Agrupar por producto y sumar el total
+ventas_por_producto = archivo_limpio.groupby('producto')['total de venta'].sum()
+print(ventas_por_producto)
+
+# Generar el gráfico
+ventas_por_producto.plot(kind='bar')
+plt.title('Ventas por producto')
+plt.xlabel('Producto')
+plt.ylabel('Total ventas')
+plt.tight_layout()
+plt.show()
+
+# al borrar indices, se resetean para que quden consecutivos
+archivo_limpio.reset_index(drop=True, inplace=True)
+
+#exportacion de archivo a esta misma carpeta
+archivo_limpio.to_csv('ventas_limpio.csv', index=False)
+
+
